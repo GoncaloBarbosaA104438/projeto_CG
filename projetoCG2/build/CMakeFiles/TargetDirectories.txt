@@ -1,0 +1,4 @@
+/Users/jorgebarbosa/Downloads/projetoCG2/build/CMakeFiles/generator.dir
+/Users/jorgebarbosa/Downloads/projetoCG2/build/CMakeFiles/engine.dir
+/Users/jorgebarbosa/Downloads/projetoCG2/build/CMakeFiles/edit_cache.dir
+/Users/jorgebarbosa/Downloads/projetoCG2/build/CMakeFiles/rebuild_cache.dir
