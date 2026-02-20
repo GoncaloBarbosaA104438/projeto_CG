@@ -1,1 +1,1 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/generator.dir/generator.cpp.o -o generator
+/usr/bin/c++ CMakeFiles/generator.dir/generator.cpp.o -o generator 

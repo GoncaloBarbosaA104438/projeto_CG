@@ -1,1 +1,1 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/engine.dir/engine.cpp.o CMakeFiles/engine.dir/tinyxml2.cpp.o -o engine  -framework OpenGL -framework GLUT
+/usr/bin/c++ CMakeFiles/engine.dir/engine.cpp.o CMakeFiles/engine.dir/tinyxml2.cpp.o -o engine  /usr/lib/x86_64-linux-gnu/libGLU.so /usr/lib/x86_64-linux-gnu/libglut.so /usr/lib/x86_64-linux-gnu/libXmu.so /usr/lib/x86_64-linux-gnu/libXi.so /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libOpenGL.so 
