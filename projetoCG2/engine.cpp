@@ -202,16 +202,15 @@ void renderScene(void)
     glVertex3f(0.0f, 0.0f, 100.0f); // Z Azul
     glEnd();
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, polyMode);
     // Desenhar todos os modelos
     glBegin(GL_TRIANGLES);
+    glColor3f(1.0f, 1.0f, 1.0f); // Branco para os modelos
     for (const auto &model : models)
     {
         for (const auto &v : model)
         {
             glVertex3f(v.x, v.y, v.z);
-            glColor3f(1.0f, 1.0f, 1.0f); // Branco para os modelos
-
         }
     }
     glEnd();
