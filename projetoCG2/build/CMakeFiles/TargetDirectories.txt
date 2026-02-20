@@ -1,4 +1,0 @@
-/home/goncalo/CG/projetoCG2/build/CMakeFiles/generator.dir
-/home/goncalo/CG/projetoCG2/build/CMakeFiles/engine.dir
-/home/goncalo/CG/projetoCG2/build/CMakeFiles/edit_cache.dir
-/home/goncalo/CG/projetoCG2/build/CMakeFiles/rebuild_cache.dir
