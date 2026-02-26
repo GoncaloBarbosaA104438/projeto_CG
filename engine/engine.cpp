@@ -151,34 +151,46 @@ void keyboardFunc(unsigned char key, int x, int y)
 {
     switch (key)
     {
-    case 'a':
-        camPos.alpha -= M_PI / 16;
-        break;
-    case 'd':
-        camPos.alpha += M_PI / 16;
-        break;
-    case 's':
-        camPos.beta -= M_PI / 16;
-        break;
-    case 'w':
-        camPos.beta += M_PI / 16;
-        break;
-    case 'q':
+    case '+': // Zoom In (Aproximar = diminuir o raio)
         if (camPos.radius > 1)
             camPos.radius -= 1;
         break;
-    case 'e':
+    case '-': // Zoom Out (Afastar = aumentar o raio)
         camPos.radius += 1;
         break;
     }
+    glutPostRedisplay();
+}
+
+void specialKeysFunc(int key, int x, int y)
+{
+    switch (key)
+    {
+    case GLUT_KEY_LEFT:
+        camPos.alpha -= M_PI / 16;
+        break;
+    case GLUT_KEY_RIGHT:
+        camPos.alpha += M_PI / 16;
+        break;
+    case GLUT_KEY_DOWN:
+        camPos.beta -= M_PI / 16;
+        break;
+    case GLUT_KEY_UP:
+        camPos.beta += M_PI / 16;
+        break;
+    }
+
+    // Limites dos ângulos mantêm-se iguais
     if (camPos.alpha < 0)
         camPos.alpha += M_PI * 2;
     else if (camPos.alpha > M_PI * 2)
         camPos.alpha -= M_PI * 2;
+
     if (camPos.beta < -M_PI_2)
         camPos.beta += M_PI * 2;
     else if (camPos.beta > (3 * M_PI_2))
         camPos.beta -= M_PI * 2;
+
     glutPostRedisplay();
 }
 
@@ -222,16 +234,17 @@ int main(int argc, char **argv)
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowPosition(100, 100);
     glutInitWindowSize(800, 800);
-    glutCreateWindow("GAIA");
+    glutCreateWindow("CG26");
 
     // Required callback registry
     glutDisplayFunc(renderScene);
     glutKeyboardFunc(keyboardFunc);
+    glutSpecialFunc(specialKeysFunc);
     glutReshapeFunc(changeSize);
 
     // OpenGL settings
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
 
     // enter GLUT's main cycle
     glutMainLoop();
