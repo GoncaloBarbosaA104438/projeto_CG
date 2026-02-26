@@ -36,40 +36,31 @@ double polarX(Polar polar) { return polar.radius * cos(polar.beta) * sin(polar.a
 double polarY(Polar polar) { return polar.radius * sin(polar.beta); }
 double polarZ(Polar polar) { return polar.radius * cos(polar.beta) * cos(polar.alpha); }
 
-//----------------------------------------------------------------------------
-
 void changeSize(int width, int height)
 {
-    // Prevent a divide by zero, when window is too short
-    //(you can't make a window with zero width)
     if (height == 0)
         height = 1;
-    // compute window's aspect ratio
+
     float ratio = width * 1.0 / height;
-    // Set the projection matrix as current
+
     glMatrixMode(GL_PROJECTION);
-    // Load Identity Matrix
     glLoadIdentity();
-    // Set the viewport to be the entire window
     glViewport(0, 0, width, height);
-    // Set perspective
     gluPerspective(45.0f, ratio, 1.0f, 1000.0f);
-    // return to the model view matrix mode
     glMatrixMode(GL_MODELVIEW);
 }
 
 void draw_axis()
 {
     glBegin(GL_LINES);
-    // X axis in red
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex3f(-100.0f, 0.0f, 0.0f);
     glVertex3f(100.0f, 0.0f, 0.0f);
-    // Y Axis in Green
+
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(0.0f, -100.0f, 0.0f);
     glVertex3f(0.0f, 100.0f, 0.0f);
-    // Z Axis in Blue
+
     glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(0.0f, 0.0f, -100.0f);
     glVertex3f(0.0f, 0.0f, 100.0f);
@@ -78,7 +69,6 @@ void draw_axis()
 
 std::vector<Point> vectorize(const char *filename)
 {
-
     std::ifstream file(filename);
     if (!file.good())
     {
@@ -118,7 +108,6 @@ std::vector<Point> vectorize(const char *filename)
 
 void renderScene()
 {
-    // Reset do buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
@@ -126,9 +115,9 @@ void renderScene()
               0.0, 0.0, 0.0,
               0.0f, camPos.beta > M_PI_2 ? -1.0f : 1.0f, 0.0f);
 
-    draw_axis(); // Desenhar os eixos XYZ
+    draw_axis();
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Apenas linhas para ver a estrutura
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     puts("Rendering...");
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -151,11 +140,11 @@ void keyboardFunc(unsigned char key, int x, int y)
 {
     switch (key)
     {
-    case '+': // Zoom In (Aproximar = diminuir o raio)
+    case '+':
         if (camPos.radius > 1)
             camPos.radius -= 1;
         break;
-    case '-': // Zoom Out (Afastar = aumentar o raio)
+    case '-':
         camPos.radius += 1;
         break;
     }
@@ -180,7 +169,6 @@ void specialKeysFunc(int key, int x, int y)
         break;
     }
 
-    // Limites dos ângulos mantêm-se iguais
     if (camPos.alpha < 0)
         camPos.alpha += M_PI * 2;
     else if (camPos.alpha > M_PI * 2)
@@ -218,7 +206,6 @@ bool loadScene(const char *filename)
     return true;
 }
 
-// O teu main fica super limpo e legível:
 int main(int argc, char **argv)
 {
     if (argc != 2)
@@ -236,17 +223,14 @@ int main(int argc, char **argv)
     glutInitWindowSize(800, 800);
     glutCreateWindow("CG26");
 
-    // Required callback registry
     glutDisplayFunc(renderScene);
     glutKeyboardFunc(keyboardFunc);
     glutSpecialFunc(specialKeysFunc);
     glutReshapeFunc(changeSize);
 
-    // OpenGL settings
     glEnable(GL_DEPTH_TEST);
     // glEnable(GL_CULL_FACE);
 
-    // enter GLUT's main cycle
     glutMainLoop();
 
     return 0;
