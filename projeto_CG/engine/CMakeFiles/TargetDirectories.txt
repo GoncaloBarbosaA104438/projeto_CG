@@ -1,0 +1,5 @@
+/Users/jorgebarbosa/Desktop/projeto_CG/engine/CMakeFiles/tinyxml_lib.dir
+/Users/jorgebarbosa/Desktop/projeto_CG/engine/CMakeFiles/generator.dir
+/Users/jorgebarbosa/Desktop/projeto_CG/engine/CMakeFiles/engine.dir
+/Users/jorgebarbosa/Desktop/projeto_CG/engine/CMakeFiles/edit_cache.dir
+/Users/jorgebarbosa/Desktop/projeto_CG/engine/CMakeFiles/rebuild_cache.dir
