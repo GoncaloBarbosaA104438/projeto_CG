@@ -3,6 +3,7 @@
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
+#include <GL/glew.h>
 #include <GL/glut.h>
 #endif
 
@@ -32,13 +33,18 @@ struct Transform {
         : type(t), angle(ang), x(px), y(py), z(pz) {}
 };
 
+// Estrutura para armazenar os IDs dos VBOs na GPU [cite: 48, 137]
+struct Model {
+    GLuint vbo;
+    int vertexCount;
+};
+
 struct Group {
     std::vector<Transform> transforms;
-    std::vector<std::vector<Point>> models;
+    std::vector<Model> models; // Agora guarda referências para VBOs
     std::vector<Group> children;
 };
 
-// Estruturas para guardar as configurações lidas do XML
 struct WindowSettings {
     int width = 800;
     int height = 800;
@@ -60,7 +66,6 @@ struct Polar {
     double beta;
 };
 
-// Valores iniciais (serão substituídos pelos do XML no loadScene)
 Polar camPos = {sqrt(75), M_PI_4, M_PI_4}; 
 
 double polarX(Polar polar) { return polar.radius * cos(polar.beta) * sin(polar.alpha); }
@@ -73,31 +78,20 @@ void changeSize(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glViewport(0, 0, width, height);
-    
-    // Atualizado para usar os valores lidos do XML
     gluPerspective(cameraSettings.fov, ratio, cameraSettings.nearPlane, cameraSettings.farPlane);
-    
     glMatrixMode(GL_MODELVIEW);
 }
 
 void draw_axis() {
     glBegin(GL_LINES);
-    
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(-100.0f, 0.0f, 0.0f);
-    glVertex3f(100.0f, 0.0f, 0.0f);
-    
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(0.0f, -100.0f, 0.0f);
-    glVertex3f(0.0f, 100.0f, 0.0f);
-   
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(0.0f, 0.0f, -100.0f);
-    glVertex3f(0.0f, 0.0f, 100.0f);
+    glColor3f(1.0f, 0.0f, 0.0f); glVertex3f(-100.0f, 0.0f, 0.0f); glVertex3f(100.0f, 0.0f, 0.0f);
+    glColor3f(0.0f, 1.0f, 0.0f); glVertex3f(0.0f, -100.0f, 0.0f); glVertex3f(0.0f, 100.0f, 0.0f);
+    glColor3f(0.0f, 0.0f, 1.0f); glVertex3f(0.0f, 0.0f, -100.0f); glVertex3f(0.0f, 0.0f, 100.0f);
     glEnd();
 }
 
-std::vector<Point> vectorize(const char *filename) {
+// Função atualizada para carregar dados diretamente para VBOs 
+Model vectorize(const char *filename) {
     std::ifstream file(filename);
     if (!file.good()) {
         file.open(std::string("../").append(filename).c_str());
@@ -108,25 +102,32 @@ std::vector<Point> vectorize(const char *filename) {
     }
 
     std::string line;
-    std::vector<Point> solid;
+    std::vector<float> vertexData;
     printf("Reading %s\n", filename);
     std::getline(file, line);
 
     unsigned long N = std::stoul(line);
-    solid.reserve(N);
+    vertexData.reserve(N * 3);
     for (unsigned long i = 0; i < N; i++) {
         std::getline(file, line);
-        double a, b, c;
-        int matches = sscanf(line.c_str(), "%lf %lf %lf", &a, &b, &c);
-        if (matches != 3) {
-            printf("ERROR - invalid number of points in vertex %s\n", line.c_str());
-            exit(1);
-        }
-        solid.push_back(Point(a, b, c));
+        float a, b, c;
+        sscanf(line.c_str(), "%f %f %f", &a, &b, &c);
+        vertexData.push_back(a);
+        vertexData.push_back(b);
+        vertexData.push_back(c);
     }
     file.close();
-    printf("Finished reading %s\n", filename);
-    return solid;
+
+    Model m;
+    m.vertexCount = N;
+    
+    // Gerar e preencher o buffer na GPU 
+    glGenBuffers(1, &m.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m.vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
+
+    printf("Finished reading %s - VBO ID: %d\n", filename, m.vbo);
+    return m;
 }
 
 Group parseGroup(XMLElement* groupElement) {
@@ -138,21 +139,11 @@ Group parseGroup(XMLElement* groupElement) {
         while (opElement) {
             std::string opName = opElement->Name();
             if (opName == "translate") {
-                float x = opElement->FloatAttribute("x");
-                float y = opElement->FloatAttribute("y");
-                float z = opElement->FloatAttribute("z");
-                currentGroup.transforms.push_back(Transform(TRANSLATE, x, y, z));
+                currentGroup.transforms.push_back(Transform(TRANSLATE, opElement->FloatAttribute("x"), opElement->FloatAttribute("y"), opElement->FloatAttribute("z")));
             } else if (opName == "rotate") {
-                float angle = opElement->FloatAttribute("angle");
-                float x = opElement->FloatAttribute("x");
-                float y = opElement->FloatAttribute("y");
-                float z = opElement->FloatAttribute("z");
-                currentGroup.transforms.push_back(Transform(ROTATE, angle, x, y, z));
+                currentGroup.transforms.push_back(Transform(ROTATE, opElement->FloatAttribute("angle"), opElement->FloatAttribute("x"), opElement->FloatAttribute("y"), opElement->FloatAttribute("z")));
             } else if (opName == "scale") {
-                float x = opElement->FloatAttribute("x");
-                float y = opElement->FloatAttribute("y");
-                float z = opElement->FloatAttribute("z");
-                currentGroup.transforms.push_back(Transform(SCALE, x, y, z));
+                currentGroup.transforms.push_back(Transform(SCALE, opElement->FloatAttribute("x"), opElement->FloatAttribute("y"), opElement->FloatAttribute("z")));
             }
             opElement = opElement->NextSiblingElement();
         }
@@ -163,9 +154,7 @@ Group parseGroup(XMLElement* groupElement) {
         XMLElement* modelElement = modelsElement->FirstChildElement("model");
         while (modelElement) {
             const char* file = modelElement->Attribute("file");
-            if (file) {
-                currentGroup.models.push_back(vectorize(file));
-            }
+            if (file) currentGroup.models.push_back(vectorize(file));
             modelElement = modelElement->NextSiblingElement("model");
         }
     }
@@ -189,14 +178,12 @@ bool loadScene(const char *filename) {
     XMLElement *world = doc.FirstChildElement("world");
     if (!world) return false;
 
-    // --- LER WINDOW ---
     XMLElement *window = world->FirstChildElement("window");
     if (window) {
         window->QueryIntAttribute("width", &windowSettings.width);
         window->QueryIntAttribute("height", &windowSettings.height);
     }
 
-    // --- LER CAMERA ---
     XMLElement *camera = world->FirstChildElement("camera");
     if (camera) {
         XMLElement *pos = camera->FirstChildElement("position");
@@ -204,29 +191,24 @@ bool loadScene(const char *filename) {
             pos->QueryFloatAttribute("x", &cameraSettings.posX);
             pos->QueryFloatAttribute("y", &cameraSettings.posY);
             pos->QueryFloatAttribute("z", &cameraSettings.posZ);
-            
-            // Converter Cartesianas para Polares para não quebrar os controlos de teclado
             camPos.radius = sqrt(pow(cameraSettings.posX, 2) + pow(cameraSettings.posY, 2) + pow(cameraSettings.posZ, 2));
             if (camPos.radius != 0) {
                 camPos.beta = asin(cameraSettings.posY / camPos.radius);
                 camPos.alpha = atan2(cameraSettings.posX, cameraSettings.posZ);
             }
         }
-        
         XMLElement *look = camera->FirstChildElement("lookAt");
         if (look) {
             look->QueryFloatAttribute("x", &cameraSettings.lookX);
             look->QueryFloatAttribute("y", &cameraSettings.lookY);
             look->QueryFloatAttribute("z", &cameraSettings.lookZ);
         }
-        
         XMLElement *up = camera->FirstChildElement("up");
         if (up) {
             up->QueryFloatAttribute("x", &cameraSettings.upX);
             up->QueryFloatAttribute("y", &cameraSettings.upY);
             up->QueryFloatAttribute("z", &cameraSettings.upZ);
         }
-        
         XMLElement *proj = camera->FirstChildElement("projection");
         if (proj) {
             proj->QueryFloatAttribute("fov", &cameraSettings.fov);
@@ -235,88 +217,70 @@ bool loadScene(const char *filename) {
         }
     }
 
-    // --- LER GRUPOS ---
     XMLElement *rootGroupElement = world->FirstChildElement("group");
-    if (rootGroupElement) {
-        sceneRoot = parseGroup(rootGroupElement);
-    }
+    if (rootGroupElement) sceneRoot = parseGroup(rootGroupElement);
+
     return true;
 }
 
+// Função de desenho atualizada para VBOs 
 void drawGroup(const Group& g) {
     glPushMatrix(); 
 
     for (const auto& t : g.transforms) {
-        if (t.type == TRANSLATE) {
-            glTranslatef(t.x, t.y, t.z);
-        } else if (t.type == ROTATE) {
-            glRotatef(t.angle, t.x, t.y, t.z);
-        } else if (t.type == SCALE) {
-            glScalef(t.x, t.y, t.z);
-        }
+        if (t.type == TRANSLATE) glTranslatef(t.x, t.y, t.z);
+        else if (t.type == ROTATE) glRotatef(t.angle, t.x, t.y, t.z);
+        else if (t.type == SCALE) glScalef(t.x, t.y, t.z);
     }
 
     glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_TRIANGLES);
-    for (const auto &solid : g.models) {
-        for (const auto &point : solid) {
-            glVertex3f(point.getX(), point.getY(), point.getZ());
-        }
+    
+    // Renderização via Vertex Arrays 
+    for (const auto &m : g.models) {
+        glBindBuffer(GL_ARRAY_BUFFER, m.vbo);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+        glDrawArrays(GL_TRIANGLES, 0, m.vertexCount);
     }
-    glEnd();
 
-    for (const auto& child : g.children) {
-        drawGroup(child);
-    }
+    for (const auto& child : g.children) drawGroup(child);
 
     glPopMatrix(); 
 }
 
 void renderScene() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     glLoadIdentity();
     
-    // Atualizado para usar os valores lidos do XML (com camPos para interatividade)
     gluLookAt(polarX(camPos), polarY(camPos), polarZ(camPos),
               cameraSettings.lookX, cameraSettings.lookY, cameraSettings.lookZ,
               cameraSettings.upX, cameraSettings.upY, cameraSettings.upZ);
 
     draw_axis();
-
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    // Ativar o estado para desenho por arrays 
+    glEnableClientState(GL_VERTEX_ARRAY);
     drawGroup(sceneRoot);
+    glDisableClientState(GL_VERTEX_ARRAY);
 
     glutSwapBuffers();
 }
 
 void keyboardFunc(unsigned char key, int x, int y) {
-    switch (key) {
-    case '+':
-        if (camPos.radius > 1) camPos.radius -= 1;
-        break;
-    case '-':
-        camPos.radius += 1;
-        break;
-    }
+    if (key == '+') { if (camPos.radius > 1) camPos.radius -= 1; }
+    else if (key == '-') camPos.radius += 1;
     glutPostRedisplay();
 }
 
 void specialKeysFunc(int key, int x, int y) {
     switch (key) {
-    case GLUT_KEY_LEFT:  camPos.alpha -= M_PI / 16; break;
-    case GLUT_KEY_RIGHT: camPos.alpha += M_PI / 16; break;
-    case GLUT_KEY_DOWN:  camPos.beta -= M_PI / 16; break;
-    case GLUT_KEY_UP:    camPos.beta += M_PI / 16; break;
+        case GLUT_KEY_LEFT:  camPos.alpha -= M_PI / 16; break;
+        case GLUT_KEY_RIGHT: camPos.alpha += M_PI / 16; break;
+        case GLUT_KEY_DOWN:  camPos.beta -= M_PI / 16; break;
+        case GLUT_KEY_UP:    camPos.beta += M_PI / 16; break;
     }
-
-    if (camPos.alpha < 0) camPos.alpha += M_PI * 2;
-    else if (camPos.alpha > M_PI * 2) camPos.alpha -= M_PI * 2;
-
-    if (camPos.beta < -M_PI_2) camPos.beta += M_PI * 2;
-    else if (camPos.beta > (3 * M_PI_2)) camPos.beta -= M_PI * 2;
-
+    if (camPos.beta < -M_PI_2 + 0.01) camPos.beta = -M_PI_2 + 0.01;
+    if (camPos.beta > M_PI_2 - 0.01) camPos.beta = M_PI_2 - 0.01;
     glutPostRedisplay();
 }
 
@@ -326,19 +290,23 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Carregar a cena *antes* de inicializar o GLUT garante que temos a largura e altura corretas
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowPosition(100, 100);
+    glutInitWindowSize(800, 800);
+    glutCreateWindow("CG26 - Fase 3 VBOs");
+
+    #ifndef __APPLE__
+    glewInit(); // Inicializa GLEW se não estiver em Mac 
+    #endif
+
+    // IMPORTANTE: loadScene tem de vir DEPOIS do glutCreateWindow para o OpenGL inicializar VBOs
     if (!loadScene(argv[1])) {
         puts("Erro ao carregar a cena XML!");
         return 1;
     }
 
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-    glutInitWindowPosition(100, 100);
-    
-    // Atualizado para usar os valores lidos do XML
-    glutInitWindowSize(windowSettings.width, windowSettings.height);
-    glutCreateWindow("CG26 - Fase 2");
+    glutReshapeWindow(windowSettings.width, windowSettings.height);
 
     glutDisplayFunc(renderScene);
     glutKeyboardFunc(keyboardFunc);
@@ -346,7 +314,6 @@ int main(int argc, char **argv) {
     glutReshapeFunc(changeSize);
 
     glEnable(GL_DEPTH_TEST);
-
     glutMainLoop();
     return 0;
 }
