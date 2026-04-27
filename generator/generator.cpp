@@ -17,7 +17,6 @@
 
 int main(int argc, char **argv)
 {
-    // Proteção: se o utilizador não passar argumentos, o programa avisa e sai em segurança
     if (argc < 2)
     {
         std::cout << "Erro: Faltam argumentos! Uso: ./generator <forma> [parametros] <ficheiro.3d>\n";
