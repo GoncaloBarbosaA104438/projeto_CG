@@ -23,6 +23,8 @@ add_executable(generator
     generator/plane.cpp
     generator/sphere.cpp
     generator/cone.cpp
+    generator/bezier.cpp
+    generator/ring.cpp
     point/point.cpp      
 )
 
