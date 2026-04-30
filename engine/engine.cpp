@@ -491,23 +491,32 @@ void renderScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
+    // 1. Coloca a câmara
     gluLookAt(polarX(camPos), polarY(camPos), polarZ(camPos),
               cameraSettings.lookX, cameraSettings.lookY, cameraSettings.lookZ,
               cameraSettings.upX, cameraSettings.upY, cameraSettings.upZ);
 
     draw_axis();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // Ir buscar o tempo real numa única vez e converter para segundos
     float timeInSeconds = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
 
     glEnableClientState(GL_VERTEX_ARRAY);
-    drawGroup(sceneRoot, timeInSeconds); // Passa o tempo à função!
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0f, 1.0f);
+    drawGroup(sceneRoot, timeInSeconds);
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    drawGroup(sceneRoot, timeInSeconds);
+
     glDisableClientState(GL_VERTEX_ARRAY);
 
     glutSwapBuffers();
-
-    // Opcional mas recomendado: forçar a cena a redesenhar a cada frame para a animação ser fluída
     glutPostRedisplay();
 }
 
