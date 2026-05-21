@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wno-deprecated -O3 -DNDEBUG -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/engine.dir/engine/engine.cpp.o CMakeFiles/engine.dir/point/point.cpp.o -o engine  libtinyxml_lib.a -framework OpenGL -framework OpenGL -framework GLUT -framework Cocoa
