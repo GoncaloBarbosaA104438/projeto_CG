@@ -3,99 +3,80 @@
 #include <string>
 #include <vector>
 #include "box.hpp"
-#include "../point/point.hpp"
 
-void generateBox(const std::string &fileName, float length, int divisions)
+void generateBox(const std::string& fileName, float length, int divisions)
 {
-    std::ofstream outFile(fileName);
-    if (!outFile.is_open())
-    {
-        std::cerr << "Erro ao abrir o ficheiro: " << fileName << "\n";
-        return;
-    }
+    std::ofstream out(fileName);
+    if (!out.is_open()) { std::cerr << "Erro ao abrir: " << fileName << "\n"; return; }
 
-    float halfDim = length / 2.0f;
+    float h = length / 2.0f;
     float step = length / divisions;
     int totalVertices = 6 * 2 * 3 * divisions * divisions;
-    outFile << totalVertices << std::endl;
+    out << totalVertices << "\n";
 
-    auto generateFace = [&](float fixedCoord, int axis, bool reverseOrder)
-    {
-        for (int i = 0; i < divisions; ++i)
-        {
-            for (int j = 0; j < divisions; ++j)
-            {
-                float v1_start = -halfDim + i * step;
-                float v1_end = v1_start + step;
-                float v2_start = -halfDim + j * step;
-                float v2_end = v2_start + step;
+    // face: axis=0 X-fixed, axis=1 Y-fixed, axis=2 Z-fixed
+    // sign: +1 or -1 (which side)
+    auto writeFace = [&](int axis, float sign) {
+        float nx = 0, ny = 0, nz = 0;
+        if (axis == 0) nx = sign;
+        if (axis == 1) ny = sign;
+        if (axis == 2) nz = sign;
 
-                Point p1{0, 0, 0}, p2{0, 0, 0}, p3{0, 0, 0}, p4{0, 0, 0};
+        for (int i = 0; i < divisions; ++i) {
+            for (int j = 0; j < divisions; ++j) {
+                float a0 = -h + i * step, a1 = a0 + step;
+                float b0 = -h + j * step, b1 = b0 + step;
+                float u0 = (float)j / divisions, u1 = (float)(j+1) / divisions;
+                float v0 = (float)i / divisions, v1 = (float)(i+1) / divisions;
 
-                // Cálculo dos pontos conforme o eixo fixo
-                switch (axis)
-                {
-                case 0: // Faces esquerda/direita (X fixo)
-                    p1 = Point(fixedCoord, v1_start, v2_start);
-                    p2 = Point(fixedCoord, v1_end, v2_start);
-                    p3 = Point(fixedCoord, v1_start, v2_end);
-                    p4 = Point(fixedCoord, v1_end, v2_end);
-                    break;
-                case 1: // Faces topo/base (Y fixo)
-                    p1 = Point(v2_start, fixedCoord, v1_start);
-                    p2 = Point(v2_end, fixedCoord, v1_start);
-                    p3 = Point(v2_start, fixedCoord, v1_end);
-                    p4 = Point(v2_end, fixedCoord, v1_end);
-                    break;
-                case 2: // Faces frente/trás (Z fixo)
-                    p1 = Point(v1_start, v2_start, fixedCoord);
-                    p2 = Point(v1_end, v2_start, fixedCoord);
-                    p3 = Point(v1_start, v2_end, fixedCoord);
-                    p4 = Point(v1_end, v2_end, fixedCoord);
-                    break;
+                // Build 4 corners based on axis
+                struct V { float x,y,z,s,t; };
+                V p[4];
+                if (axis == 0) { // X fixed, vary Y=a, Z=b
+                    p[0] = {sign*h, a0, b0, u0, v0};
+                    p[1] = {sign*h, a1, b0, u0, v1};
+                    p[2] = {sign*h, a0, b1, u1, v0};
+                    p[3] = {sign*h, a1, b1, u1, v1};
+                } else if (axis == 1) { // Y fixed, vary X=b, Z=a
+                    p[0] = {b0, sign*h, a0, u0, v0};
+                    p[1] = {b1, sign*h, a0, u1, v0};
+                    p[2] = {b0, sign*h, a1, u0, v1};
+                    p[3] = {b1, sign*h, a1, u1, v1};
+                } else { // Z fixed, vary X=a, Y=b
+                    p[0] = {a0, b0, sign*h, u0, v0};
+                    p[1] = {a1, b0, sign*h, u1, v0};
+                    p[2] = {a0, b1, sign*h, u0, v1};
+                    p[3] = {a1, b1, sign*h, u1, v1};
                 }
 
-                // Ordem dos vértices para CCW (vista do exterior)
-                if (!reverseOrder)
-                {
-                    // Triângulo 1: p1 -> p2 -> p4 (CCW)
-                    outFile << p1.getX() << " " << p1.getY() << " " << p1.getZ() << std::endl;
-                    outFile << p2.getX() << " " << p2.getY() << " " << p2.getZ() << std::endl;
-                    outFile << p4.getX() << " " << p4.getY() << " " << p4.getZ() << std::endl;
+                auto write = [&](int idx) {
+                    out << p[idx].x << " " << p[idx].y << " " << p[idx].z << " "
+                        << nx << " " << ny << " " << nz << " "
+                        << p[idx].s << " " << p[idx].t << "\n";
+                };
 
-                    // Triângulo 2: p1 -> p4 -> p3 (CCW)
-                    outFile << p1.getX() << " " << p1.getY() << " " << p1.getZ() << std::endl;
-                    outFile << p4.getX() << " " << p4.getY() << " " << p4.getZ() << std::endl;
-                    outFile << p3.getX() << " " << p3.getY() << " " << p3.getZ() << std::endl;
-                }
-                else
-                {
-                    // Ordem invertida para CCW em faces opostas
-                    outFile << p1.getX() << " " << p1.getY() << " " << p1.getZ() << std::endl;
-                    outFile << p3.getX() << " " << p3.getY() << " " << p3.getZ() << std::endl;
-                    outFile << p2.getX() << " " << p2.getY() << " " << p2.getZ() << std::endl;
-
-                    outFile << p2.getX() << " " << p2.getY() << " " << p2.getZ() << std::endl;
-                    outFile << p3.getX() << " " << p3.getY() << " " << p3.getZ() << std::endl;
-                    outFile << p4.getX() << " " << p4.getY() << " " << p4.getZ() << std::endl;
+                if (sign > 0) {
+                    write(0); write(1); write(3);
+                    write(0); write(3); write(2);
+                } else {
+                    write(0); write(3); write(1);
+                    write(0); write(2); write(3);
                 }
             }
         }
     };
 
-    // Gerar todas as faces com orientação correta
-    generateFace(halfDim, 2, false);  // Frente (Z positivo) - CCW
-    generateFace(-halfDim, 2, true);  // Trás (Z negativo) - CCW invertido
-    generateFace(-halfDim, 0, true);  // Esquerda (X negativo) - CCW invertido
-    generateFace(halfDim, 0, false);  // Direita (X positivo) - CCW
-    generateFace(halfDim, 1, true);   // Topo (Y positivo) - CCW invertido
-    generateFace(-halfDim, 1, false); // Base (Y negativo) - CCW
+    writeFace(2,  1); // Front  Z+
+    writeFace(2, -1); // Back   Z-
+    writeFace(0, -1); // Left   X-
+    writeFace(0,  1); // Right  X+
+    writeFace(1,  1); // Top    Y+
+    writeFace(1, -1); // Bottom Y-
 
-    outFile.close();
-    std::cout << "Caixa gerada com sucesso e salva em " << fileName << "\n";
+    out.close();
+    std::cout << "Caixa gerada: " << fileName << "\n";
 }
 
-void box(char *file, float length, int divisions)
-{
+void box(char* file, float length, int divisions) {
     generateBox(file, length, divisions);
 }

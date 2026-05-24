@@ -6,43 +6,42 @@
 #include <vector>
 #include "../point/point.hpp"
 
-void generateRing(const std::string& fileName, float inDiam, float outDiam, int slices) {
-    std::ofstream outFile(fileName);
-    if (!outFile.is_open()) {
-        std::cerr << "Erro ao abrir o ficheiro: " << fileName << "\n";
-        return;
-    }
+void generateRing(const std::string& fileName, float inDiam, float outDiam, int slices)
+{
+    std::ofstream out(fileName);
+    if (!out.is_open()) { std::cerr << "Erro ao abrir: " << fileName << "\n"; return; }
 
-    float inRadius = inDiam / 2.0f;
-    float outRadius = outDiam / 2.0f;
+    float inR  = inDiam  / 2.0f;
+    float outR = outDiam / 2.0f;
 
-    int totalTriangles = 2 * slices;
-    int totalVertices = totalTriangles * 3;
-    outFile << totalVertices << std::endl;
+    int totalVertices = 2 * slices * 3;
+    out << totalVertices << "\n";
 
     for (int i = 0; i < slices; ++i) {
-        float theta = static_cast<float>(i) * 2.0f * M_PI / slices;
-        float thetaNext = static_cast<float>(i + 1) * 2.0f * M_PI / slices;
+        float t0 = (float)i       * 2.0f * M_PI / slices;
+        float t1 = (float)(i + 1) * 2.0f * M_PI / slices;
 
-        // Pontos no plano XZ (Y=0)
-        Point innerCurrent(inRadius * cos(theta), 0.0f, inRadius * sin(theta));
-        Point outerCurrent(outRadius * cos(theta), 0.0f, outRadius * sin(theta));
-        Point innerNext(inRadius * cos(thetaNext), 0.0f, inRadius * sin(thetaNext));
-        Point outerNext(outRadius * cos(thetaNext), 0.0f, outRadius * sin(thetaNext));
+        float iox0 = inR  * cos(t0), ioz0 = inR  * sin(t0);
+        float oox0 = outR * cos(t0), ooz0 = outR * sin(t0);
+        float iox1 = inR  * cos(t1), ioz1 = inR  * sin(t1);
+        float oox1 = outR * cos(t1), ooz1 = outR * sin(t1);
 
-        // Triângulo 1: outerNext → outerCurrent → innerCurrent
-        outFile << outerNext.getX() << " " << outerNext.getY() << " " << outerNext.getZ() << std::endl;
-        outFile << outerCurrent.getX() << " " << outerCurrent.getY() << " " << outerCurrent.getZ() << std::endl;
-        outFile << innerCurrent.getX() << " " << innerCurrent.getY() << " " << innerCurrent.getZ() << std::endl;
+        // UV: map radial distance to v, angle to u
+        float u0 = (float)i / slices, u1 = (float)(i + 1) / slices;
 
-        // Triângulo 2: innerNext → outerNext → innerCurrent
-        outFile << innerNext.getX() << " " << innerNext.getY() << " " << innerNext.getZ() << std::endl;
-        outFile << outerNext.getX() << " " << outerNext.getY() << " " << outerNext.getZ() << std::endl;
-        outFile << innerCurrent.getX() << " " << innerCurrent.getY() << " " << innerCurrent.getZ() << std::endl;
+        // Tri 1: outer_next, outer_cur, inner_cur (normal up)
+        out << oox1<<" 0 "<<ooz1<<" 0 1 0 "<<u1<<" 1\n";
+        out << oox0<<" 0 "<<ooz0<<" 0 1 0 "<<u0<<" 1\n";
+        out << iox0<<" 0 "<<ioz0<<" 0 1 0 "<<u0<<" 0\n";
+
+        // Tri 2: inner_next, outer_next, inner_cur
+        out << iox1<<" 0 "<<ioz1<<" 0 1 0 "<<u1<<" 0\n";
+        out << oox1<<" 0 "<<ooz1<<" 0 1 0 "<<u1<<" 1\n";
+        out << iox0<<" 0 "<<ioz0<<" 0 1 0 "<<u0<<" 0\n";
     }
 
-    outFile.close();
-    std::cout << "Anel XZ corrigido gerado com sucesso: " << fileName << "\n";
+    out.close();
+    std::cout << "Anel gerado: " << fileName << "\n";
 }
 
 void ring(char* file, float inDiam, float outDiam, int slices) {
