@@ -22,7 +22,7 @@
             </transform>
             <models>
                 <model file="sol.3d">
-                    <texture file="sun.jpg" />
+                    <texture file="../texturas/sun.jpg" />
                     <color>
                         <diffuse  R="0" G="0" B="0" />
                         <ambient  R="0" G="0" B="0" />
@@ -47,7 +47,7 @@
             </transform>
             <models>
                 <model file="planeta.3d">
-                    <texture file="mercury.jpg" />
+                    <texture file="../texturas/mercury.jpg" />
                     <color>
                         <diffuse  R="180" G="160" B="140" />
                         <ambient  R="50"  G="45"  B="40"  />
@@ -72,7 +72,7 @@
             </transform>
             <models>
                 <model file="planeta.3d">
-                    <texture file="venus.jpg" />
+                    <texture file="../texturas/venus.jpg" />
                     <color>
                         <diffuse  R="220" G="180" B="100" />
                         <ambient  R="60"  G="50"  B="30"  />
@@ -100,7 +100,7 @@
                 </transform>
                 <models>
                     <model file="planeta.3d">
-                        <texture file="earth.jpg" />
+                        <texture file="../texturas/earth.jpg" />
                         <color>
                             <diffuse  R="100" G="140" B="200" />
                             <ambient  R="30"  G="40"  B="60"  />
@@ -124,7 +124,7 @@
                 </transform>
                 <models>
                     <model file="lua.3d">
-                        <texture file="moon.jpg" />
+                        <texture file="../texturas/moon.jpg" />
                         <color>
                             <diffuse  R="180" G="180" B="180" />
                             <ambient  R="40"  G="40"  B="40"  />
@@ -150,7 +150,7 @@
             </transform>
             <models>
                 <model file="planeta.3d">
-                    <texture file="mars.jpg" />
+                    <texture file="../texturas/mars.jpg" />
                     <color>
                         <diffuse  R="200" G="100" B="80"  />
                         <ambient  R="60"  G="30"  B="25"  />
@@ -175,7 +175,7 @@
             </transform>
             <models>
                 <model file="planeta.3d">
-                    <texture file="jupiter.jpg" />
+                    <texture file="../texturas/jupiter.jpg" />
                     <color>
                         <diffuse  R="220" G="200" B="180" />
                         <ambient  R="60"  G="55"  B="50"  />
@@ -203,7 +203,7 @@
                 </transform>
                 <models>
                     <model file="planeta.3d">
-                        <texture file="saturn.jpg" />
+                        <texture file="../texturas/saturn.jpg" />
                         <color>
                             <diffuse  R="230" G="210" B="160" />
                             <ambient  R="65"  G="60"  B="45"  />
@@ -221,12 +221,12 @@
                 </transform>
                 <models>
                     <model file="anel.3d">
-                        <texture file="saturn_ring.jpg" />
+                        <texture file="../texturas/saturn_ring.png" />
                         <color>
                             <diffuse  R="200" G="190" B="160" />
-                            <ambient  R="50"  G="45"  B="40"  />
+                            <ambient  R="120" G="110" B="90"  />
                             <specular R="0"   G="0"   B="0"   />
-                            <emissive R="0"   G="0"   B="0"   />
+                            <emissive R="70"  G="65"  B="55"  />
                             <shininess value="0" />
                         </color>
                     </model>
@@ -247,7 +247,7 @@
             </transform>
             <models>
                 <model file="planeta.3d">
-                    <texture file="uranus.jpg" />
+                    <texture file="../texturas/uranus.jpg" />
                     <color>
                         <diffuse  R="150" G="220" B="255" />
                         <ambient  R="40"  G="60"  B="70"  />
@@ -272,7 +272,7 @@
             </transform>
             <models>
                 <model file="planeta.3d">
-                    <texture file="neptune.jpg" />
+                    <texture file="../texturas/neptune.jpg" />
                     <color>
                         <diffuse  R="60"  G="100" B="220" />
                         <ambient  R="20"  G="30"  B="65"  />
